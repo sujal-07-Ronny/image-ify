@@ -6,7 +6,7 @@
   "scripts": {
    "start": "nodemon index.js",
     "dev": "nodemon index.js",
-    "build": "npm install && npm install --prefix Frontend && npm run build --prefix Frontend"
+    "build": "npm install && npm install --prefix Client && npm run build --prefix Client"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
