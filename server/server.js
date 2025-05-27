@@ -27,9 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 if (process.env.Node_ENV === "production") {
   const dirPath = path.resolve();
-  app.use(express.static("./Client/dist"));
+  app.use(express.static("./client/dist"));
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(dirPath, "./Client/dist", "index.html"));
+    res.sendFile(path.resolve(dirPath, "./client/dist", "index.html"));
   });
 }
 
