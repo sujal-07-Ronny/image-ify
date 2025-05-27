@@ -5,6 +5,10 @@ import cors from "cors";
 import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/imageRoutes.js";
 import path from "path";
+import { fileURLToPath } from "url";
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -26,15 +30,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 if (process.env.NODE_ENV === "production") {
-  const path = require('path');
-  const dirPath = path.resolve();
-
-  app.use(express.static(path.join(dirPath, "Frontend", "build")));
+  app.use(express.static(path.join(__dirname, "client", "dist")));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(dirPath, "Frontend", "build", "index.html"));
+    res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
   });
 }
+
 
 
 // Database connection
