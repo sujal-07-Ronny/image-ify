@@ -29,11 +29,12 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client", "dist")));
 
+if (process.env.Node_ENV === "production") {
+  const dirPath = path.resolve();
+  app.use(express.static("./client/dist"));
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+    res.sendFile(path.resolve(dirPath, "./client/dist", "index.html"));
   });
 }
 
