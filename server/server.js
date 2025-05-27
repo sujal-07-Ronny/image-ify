@@ -6,6 +6,7 @@ import userRouter from "./routes/userRoutes.js";
 import imageRouter from "./routes/imageRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
+
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
+const CLIENT_URL = process.env.CLIENT_URL || "https://image-ify-m3tj.vercel.app";
 
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is missing! Check your .env file.");
@@ -22,23 +24,21 @@ if (!MONGO_URI) {
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: CLIENT_URL,
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-if (process.env.Node_ENV === "production") {
+// Serve frontend in production
+if (process.env.NODE_ENV === "production") {
   const dirPath = path.resolve();
-  app.use(express.static("./client/dist"));
+  app.use(express.static(path.join(dirPath, "./client/dist")));
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(dirPath, "./client/dist", "index.html"));
+    res.sendFile(path.join(dirPath, "./client/dist", "index.html"));
   });
 }
-
-
 
 // Database connection
 const connectDB = async () => {
@@ -59,10 +59,12 @@ connectDB();
 // Routes
 app.use("/api/users", userRouter);
 app.use("/api/image", imageRouter);
+
 app.use((req, res, next) => {
   console.log(`Incoming ${req.method} request to ${req.path}`);
   next();
 });
+
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
