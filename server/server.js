@@ -25,13 +25,17 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.Node_ENV === "production") {
+if (process.env.NODE_ENV === "production") {
+  const path = require('path');
   const dirPath = path.resolve();
-  app.use(express.static("./Frontend/dist"));
+
+  app.use(express.static(path.join(dirPath, "Frontend", "build")));
+
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(dirPath, "./Frontend/dist", "index.html"));
+    res.sendFile(path.join(dirPath, "Frontend", "build", "index.html"));
   });
 }
+
 
 // Database connection
 const connectDB = async () => {
