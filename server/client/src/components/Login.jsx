@@ -5,6 +5,7 @@ import UserIcon from "./UserIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from 'react-toastify';
+import { USER_API_ENDPOINT } from "../utils/data.js";
 
 const Login = () => {
 
