@@ -7,183 +7,65 @@ import axios from "axios";
 import { toast } from 'react-toastify';
 
 const Login = () => {
-  const [state, setState] = useState("Login");
-  const { setShowLogin, backendUrl, setToken, setUser } = useContext(AppContext);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
-  const [errors, setErrors] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
-  const [touched, setTouched] = useState({
-    name: false,
-    email: false,
-    password: false
-  });
 
-  // Verify backend URL on component mount
-  useEffect(() => {
-    if (!backendUrl) {
-      console.error("Backend URL is not configured in AppContext");
-      toast.error("Server configuration error. Please try again later.");
-    }
-  }, [backendUrl]);
+    const [state, setState] = useState('Login')
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
+    const { backendUrl, setShowLogin, setToken, setUser } = useContext(AppContext)
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ""
-      }));
-    }
-  };
+    const onSubmitHandler = async (e) => {
+        e.preventDefault()
 
-  const handleBlur = (e) => {
-    const { name } = e.target;
-    setTouched(prev => ({
-      ...prev,
-      [name]: true
-    }));
-    validateField(name);
-  };
+        try {
 
-  const validateField = (fieldName) => {
-    let error = "";
-    const value = formData[fieldName];
-    switch (fieldName) {
-      case "name":
-        if (state === "Sign Up" && !value.trim()) {
-          error = "Full name is required";
+            if (state === 'Login') {
+
+                const { data } = await axios.post(`${USER_API_ENDPOINT}/login`, { email, password })
+
+                if (data.success) {
+                    setToken(data.token)
+                    setUser(data.user)
+                    localStorage.setItem('token', data.token)
+                    setShowLogin(false)
+                } else {
+                    toast.error(data.message)
+                }
+
+            } else {
+
+                const { data } = await axios.post(backendUrl + '/api/user/register', { name, email, password })
+
+                if (data.success) {
+                    setToken(data.token)
+                    setUser(data.user)
+                    localStorage.setItem('token', data.token)
+                    setShowLogin(false)
+                } else {
+                    toast.error(data.message)
+                }
+
+            }
+
+
+
+        } catch (error) {
+            toast.error(error.message)
         }
-        break;
-      case "email":
-        if (!value.trim()) {
-          error = "Email is required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = "Please enter a valid email address";
-        }
-        break;
-      case "password":
-        if (!value) {
-          error = "Password is required";
-        } else if (value.length < 6) {
-          error = "Password must be at least 6 characters";
-        }
-        break;
-      default:
-        break;
     }
-    setErrors(prev => ({
-      ...prev,
-      [fieldName]: error
-    }));
-    return !error;
-  };
 
-  const validateForm = () => {
-    const fieldNames = ["email", "password"];
-    if (state === "Sign Up") fieldNames.push("name");
-    let isValid = true;
-    const newTouched = { ...touched };
-    fieldNames.forEach(fieldName => {
-      newTouched[fieldName] = true;
-      if (!validateField(fieldName)) {
-        isValid = false;
-      }
-    });
-    setTouched(newTouched);
-    return isValid;
-  };
 
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields correctly");
-      return;
-    }
-  
-    if (!backendUrl) {
-      toast.error("Server configuration error. Missing backend URL.");
-      return;
-    }
-  
-    setLoading(true);
-    
-    try {
-      const endpoint = state === 'Login' ? 'login' : 'register';
-      const url = `${backendUrl}/api/users/${endpoint}`;
-      
-      console.log("Making request to:", url); // Debug log
-  
-      const payload = state === 'Login' ? {
-        email: formData.email,
-        password: formData.password
-      } : {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      };
-  
-      const response = await axios.post(url, payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-  
-      console.log("Response:", response.data); // Debug log
-  
-      if (response.data?.success) {
-        const { token, user } = response.data;
-        localStorage.setItem('token', token);
-        setToken(token);
-        setUser({
-          id: user._id,  // Changed from user.id to user._id
-          name: user.name,
-          email: user.email,
-          token: token
-        });
-        setShowLogin(false);
-        toast.success(state === "Login" ? "Login successful!" : "Registration successful!");
-      } else {
-        toast.error(response.data?.message || "Authentication failed");
-      }
-    } catch (error) {
-      console.error("Login Error:", error);
-      if (error.response) {
-        const { status, data } = error.response;
-        if (status === 404) {
-          toast.error("Endpoint not found. Please check server configuration");
-        } else {
-          toast.error(data?.message || `Server error: ${status}`);
-        }
-      } else if (error.request) {
-        toast.error("Could not connect to server. Please check your network connection");
-      } else {
-        toast.error(error.message || "An unexpected error occurred");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    useEffect(() => {
+        // Disable scrolling on body when the login is open
+        document.body.style.overflow = 'hidden';
+
+        // Cleanup function to re-enable scrolling
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
 
   return (
     <motion.div
