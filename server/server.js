@@ -22,12 +22,13 @@ if (!MONGO_URI) {
 }
 
 // Middleware
-app.use(
-  cors({
-    origin: CLIENT_URL,
-    credentials: true,
-  })
-);
+
+const corsOptions = {
+  origin: ["https://image-ify-m3tj.vercel.app/"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
