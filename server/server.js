@@ -22,24 +22,26 @@ if (!MONGO_URI) {
 }
 
 // Middleware
-
 const corsOptions = {
-  origin: ["https://image-ify-m3tj.vercel.app/"],
+  origin: [
+    "https://image-ify-m3tj.vercel.app", // Removed trailing slash
+    "http://localhost:5173",
+    "http://localhost:3000"
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend in production
-if (process.env.NODE_ENV === "production") {
-  const dirPath = path.resolve();
-  app.use(express.static(path.join(dirPath, "./client/dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(dirPath, "./client/dist", "index.html"));
-  });
-}
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`Incoming ${req.method} request to ${req.path}`);
+  next();
+});
 
 // Database connection
 const connectDB = async () => {
@@ -57,35 +59,66 @@ const connectDB = async () => {
 };
 connectDB();
 
-// Routes
-app.use("/api/users", userRouter);
-app.use("/api/image", imageRouter);
-
-app.use((req, res, next) => {
-  console.log(`Incoming ${req.method} request to ${req.path}`);
-  next();
-});
-
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "OK",
-    database:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     timestamp: new Date().toISOString(),
   });
 });
 
-// Dynamically generate backend URL
-app.get("/api/users/login", (req, res) => {
-  const backendUrl = `${req.protocol}://${req.get("host")}`;
+// API Routes - FIXED: Changed from /api/users to /api/user to match frontend
+app.use("/api/user", userRouter);
+app.use("/api/image", imageRouter);
+
+// Root endpoint
+app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    backendUrl,
+    message: "Image-ify API Server is running",
+    endpoints: {
+      health: "/api/health",
+      user: "/api/user",
+      image: "/api/image"
+    }
   });
 });
 
-// 404 Handler
+// Serve frontend in production
+if (process.env.NODE_ENV === "production") {
+  const dirPath = path.resolve();
+  app.use(express.static(path.join(dirPath, "./client/dist")));
+  
+  // Handle React routing - this should be AFTER API routes
+  app.get("*", (req, res) => {
+    // Only serve React app for non-API routes
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(dirPath, "./client/dist", "index.html"));
+    } else {
+      res.status(404).json({
+        success: false,
+        message: `API endpoint ${req.method} ${req.path} not found`,
+      });
+    }
+  });
+}
+
+// 404 Handler for API routes
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint ${req.method} ${req.path} not found`,
+    availableEndpoints: [
+      "GET /api/health",
+      "POST /api/user/register",
+      "POST /api/user/login",
+      "GET /api/user/credits"
+    ]
+  });
+});
+
+// Global 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -98,16 +131,17 @@ app.use((err, req, res, next) => {
   console.error("Server Error:", err);
   res.status(500).json({
     success: false,
-    message:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Internal server error",
+    message: process.env.NODE_ENV === "development" ? err.message : "Internal server error",
   });
 });
 
 // Start Server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📡 Available endpoints:`);
+  console.log(`   - Health: http://localhost:${PORT}/api/health`);
+  console.log(`   - User Auth: http://localhost:${PORT}/api/user`);
+  console.log(`   - Images: http://localhost:${PORT}/api/image`);
 });
 
 // Graceful shutdown
@@ -120,3 +154,6 @@ process.on("SIGTERM", () => {
     });
   });
 });
+
+// Export for Vercel
+export default app;
