@@ -13,9 +13,9 @@ const AppContextProvider = ({ children }) => {
   const [generatedImage, setGeneratedImage] = useState(null);
   const [generationPrompt, setGenerationPrompt] = useState("");
   const [generationHistory, setGenerationHistory] = useState([]);
-  const [backendUrl] = useState(
-    import.meta.env.VITE_API_URL || "http://localhost:4000"
-  );
+  
+  // In your frontend config or context
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
   const [isGenerating, setIsGenerating] = useState(false);
 
   const navigate = useNavigate();

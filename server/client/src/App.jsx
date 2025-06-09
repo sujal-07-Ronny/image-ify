@@ -4,7 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import Home from './pages/Home.jsx';
-import Result from './pages/Result';
+
 import BuyCredit from './pages/BuyCredit.jsx';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
@@ -26,7 +26,7 @@ const App = () => {
       {showLogin && <Login />}  
       <Routes>
         <Route path='/' element={<Home />} />
-        <Route path='/result' element={<Result />} />
+       
         <Route path='/pricing' element={<BuyCredit />} />
       </Routes>
       <Footer />

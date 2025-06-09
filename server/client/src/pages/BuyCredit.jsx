@@ -2,10 +2,84 @@ import React, { useContext, useState, useEffect } from "react";
 import { assets, plans } from "../assets/assets";
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Send, X, Clock, Phone, MapPin, User, MessageSquare, Calendar, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, Send, X, Clock, Phone, MapPin, User, MessageSquare, Calendar, CheckCircle2, Loader2, Currency } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+
+// Typing Indicator Component
+const TypingIndicator = () => (
+  <div className="flex space-x-1 items-center">
+    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }}></span>
+    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
+    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></span>
+  </div>
+);
 
 const BuyCredit = () => {
-  const { user } = useContext(AppContext);
+  const { user, backendUrl, loadCreditsData, token } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const initPay = async (order) => {
+    const options = {
+      key: import.meta.env.RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'Imageify Credits',
+      description: 'Purchase Credits',
+      order_id: order.id,
+      handler: async (response) => {
+        try {
+          const { data } = await axios.post(
+            `${backendUrl}/verify-payment`,
+            { response },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (data.success) {
+            toast.success("Payment successful!");
+            loadCreditsData();
+          } else {
+            toast.error("Payment verification failed");
+          }
+        } catch (error) {
+          toast.error("Payment processing error");
+        }
+      },
+      prefill: {
+        name: user.name,
+        email: user.email
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+ const handlePayment = async (planId) => {
+  try {
+    console.log("Attempting payment with backend:", `${backendUrl}/api/users/pay-razor`);
+    
+    const { data } = await axios.post(
+      `${backendUrl}/api/users/pay-razor`, // Note the full path
+      { planId },
+      { 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (data.success) {
+      await initPay(data.order);
+    }
+  } catch (error) {
+    console.error("Payment error:", error);
+    toast.error(error.response?.data?.message || "Payment failed");
+  }
+};
+
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showChatbot, setShowChatbot] = useState(false);
@@ -437,6 +511,7 @@ Agenda: ${scheduleFormData.agenda || 'General discussion'}`;
               </div>
 
               <motion.button
+                onClick={() => handlePayment(item.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`w-full py-3 rounded-xl text-white font-semibold transition-all ${
@@ -1037,14 +1112,4 @@ Agenda: ${scheduleFormData.agenda || 'General discussion'}`;
   );
 };
 
-// Typing Indicator Component
-const TypingIndicator = () => (
-  <div className="flex space-x-1 items-center">
-    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }}></span>
-    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
-    <span className="block w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></span>
-  </div>
-);
-
 export default BuyCredit;
-

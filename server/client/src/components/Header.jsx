@@ -1,16 +1,10 @@
 import React, { useContext } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { AppContext } from "../context/AppContext";
 
 const Header = () => {
-  const navigate = useNavigate();
   const { user } = useContext(AppContext);
-
-  const handleGenerateClick = () => {
-    navigate('/result');
-  };
 
   return (
     <div className="flex flex-col justify-center items-center text-center my-20 relative overflow-hidden">
@@ -64,14 +58,12 @@ const Header = () => {
         watch the magic happen.
       </motion.p>
 
-      {/* Call to Action Button */}
-      <motion.button 
-        onClick={handleGenerateClick}
+      {/* Call to Action Text (Non-clickable) */}
+      <motion.div 
         initial={{ opacity: 0, scale: 0.9 }} 
         animate={{ opacity: 1, scale: 1 }} 
         transition={{ duration: 1.6 }}
-        whileHover={{ scale: 1.05, boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)" }}
-        className="sm:text-lg text-white bg-gradient-to-r from-blue-500 to-purple-600 w-auto mt-8 px-12 py-3 flex items-center gap-2 rounded-full shadow-md transition-all duration-300 relative z-10"
+        className="sm:text-lg text-white bg-gradient-to-r from-blue-500 to-purple-600 w-auto mt-8 px-12 py-3 flex items-center gap-2 rounded-full shadow-md transition-all duration-300 relative z-10 cursor-default"
       >
         Generate Images
         <motion.img 
@@ -82,7 +74,7 @@ const Header = () => {
           src={assets.star_group}
           alt=""
         />
-      </motion.button>
+      </motion.div>
 
       {/* Sample Image Grid */}
       <motion.div 
